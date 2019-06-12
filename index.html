@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/3/w3.css">
+<head>
+    <meta charset="UTF-8">
+    <title>BlackJack</title>
+    <style>
+       .btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            background-color: #f1f1f1;
+            color: black;
+            font-size: 16px;
+            padding: 16px 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .output {
+            position: absolute;
+            top:33%;
+            left:33%;
+            transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            color: black;
+            font-size: 16px;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="blackJack.js"></script>
+<div class="container">
+    <button onclick="startGame()" class="btn" id="StartButton">Start Game</button>
+    <div class="output" id="Output">Output</div>
+</div>
+</body>
+</html>

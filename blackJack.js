@@ -27,24 +27,26 @@ function startGame() {
     outputSection.textContent = "Game playing in console.";
     dealCards();
     showCards();
-    while(players.filter(function (player) {
-        console.log(players.filter(function (player) {
-            return player.getState() === "Playable";
-        }).length);
+    playTurns();
+    //then proceed to work out the winner against the dealer
+}
+
+function playTurns(){
+    if(players.filter(function (player) {
+        console.log(player.getState(), player.name, player.currentHandValue());
         return player.getState() === "Playable";
-    }).length !== 0){
+    }).length !== 0) {
         playTurn();
+        return playTurns();
     }
 }
 
 function playTurn (){
-    console.log("played a turn");
     players.map(function (player) {
-        if(player.getState === "Playable"){
+        if(player.getState() === "Playable"){
             player.addCard(deck.shift());
         }
     });
-    console.log("played a turn");
 }
 
 function showCards() {
@@ -108,8 +110,9 @@ function createPlayer(playerName) {
         currentHandValue = 0,
         state = "Playable",
         playerDriven = false,
-        addCard = function (newCard) {
-            currentHand.push(newCard);
+        addCard = function () {
+            console.log(currentHand);
+            currentHand.push(deck.shift());
             updateHandValue();
         },
         updateHandValue = function () {
@@ -117,7 +120,7 @@ function createPlayer(playerName) {
                return total + card.trueValue;
             },0);
             if (currentHandValue > rules.bustLimit) {
-                currentHandValue = currentHandValue.reduce(function (total, card) {
+                currentHandValue = currentHand.reduce(function (total, card) {
                     if (card.trueValue === 11) {
                         //found an ace
                         card.trueValue = 1;
@@ -129,9 +132,9 @@ function createPlayer(playerName) {
                 if (currentHandValue > rules.bustLimit) {
                     state = "Bust";
                 }
-                if(state === "Playable" && currentHandValue > rules.autoStickLimit && !playerDriven){
-                    state = "Sticking";
-                }
+            }
+            if(state === "Playable" && currentHandValue > rules.autoStickLimit && !playerDriven){
+                state = "Sticking";
             }
         },
         reset = function () {
@@ -170,7 +173,7 @@ function createPlayers() {
 function dealCards() {
     for (var i = 0; i < rules.cardsDealtAtStart; i++) {
         players.map(function (player) {
-            player.addCard(deck.shift())
+            player.addCard()
         })
     }
 }

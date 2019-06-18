@@ -29,6 +29,7 @@ function startGame() {
     showCards();
     playTurns();
     //then proceed to work out the winner against the dealer
+    //declareWinners();
 }
 
 function playTurns(){

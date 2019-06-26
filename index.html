@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <title>BlackJack</title>
     <style>
-       .btn {
+        .btn {
             position: absolute;
-            top: 50%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
             -ms-transform: translate(-50%, -50%);
@@ -20,23 +20,103 @@
             border-radius: 5px;
             text-align: center;
         }
-        .output {
+
+        .hiddenBtn {
             position: absolute;
-            top:33%;
-            left:33%;
+            top: 80%;
+            left: 50%;
             transform: translate(-50%, -50%);
             -ms-transform: translate(-50%, -50%);
+            background-color: #f1f1f1;
             color: black;
             font-size: 16px;
+            padding: 16px 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
             visibility: hidden;
+        }
+
+        .output {
+            position: absolute;
+            top: 33%;
+            align-content: center;
+            color: black;
+            font-size: 16px;
+            table-layout: auto;
+            width: 100%;
         }
     </style>
 </head>
 <body>
 <script type="text/javascript" src="blackJack.js"></script>
 <div class="container">
-    <button onclick="startGame()" class="btn" id="StartButton">Start Game</button>
-    <div class="output" id="Output">Output</div>
+    <div id="StartScreen">
+        <button onclick="startGame(0)" class="btn" id="StartButton">Start Game</button>
+        <button onclick="startGame(1)" class="btn" style="left: 20%; top: 55%" id="StartButton1P">1 Player</button>
+        <button onclick="startGame(2)" class="btn" style="left: 50%; top: 55%" id="StartButton2P">2 Player</button>
+        <button onclick="startGame(3)" class="btn" style="left: 80%; top: 55%" id="StartButton3P">3 Player</button>
+    </div>
+
+    <button onclick="playGame()" class="hiddenBtn" id="PlayRoundButton">Play Next Round</button>
+    <button onclick="resetGame()" class="hiddenBtn" id="ResetButton">Reset Game</button>
+    <table class="output" id="Output">
+        <tr>
+            <td style="align-content: center" id="TurnNumber"></td>
+        </tr>
+        <tr>
+            <td id="Player0Name"></td>
+            <td id="Player1Name"></td>
+            <td id="Player2Name"></td>
+            <td id="DealerName"></td>
+        </tr>
+        <tr>
+            <td id="Player0Hand"></td>
+            <td id="Player1Hand"></td>
+            <td id="Player2Hand"></td>
+            <td id="DealerHand"></td>
+        </tr>
+        <tr>
+            <td id="Player0Total"></td>
+            <td id="Player1Total"></td>
+            <td id="Player2Total"></td>
+            <td id="DealerTotal"></td>
+        </tr>
+        <tr>
+            <td id="Player0PlayState"></td>
+            <td id="Player1PlayState"></td>
+            <td id="Player2PlayState"></td>
+            <td id="DealerPlayState"></td>
+        </tr>
+        <tr>
+            <td id="Player0WinState"></td>
+            <td id="Player1WinState"></td>
+            <td id="Player2WinState"></td>
+            <td id="DealerWinState"></td>
+        </tr>
+        <tr>
+            <td id="Player0Buttons" style="visibility: hidden">
+                <button id="Player0Twist">Twist</button>
+                <button id="Player0Stick">Stick</button>
+            </td>
+            <td id="Player1Buttons" style="visibility: hidden">
+                <button id="Player1Twist">Twist</button>
+                <button id="Player1Stick">Stick</button>
+            </td>
+            <td id="Player2Buttons" style="visibility: hidden">
+                <button id="Player2Twist">Twist</button>
+                <button id="Player2Stick">Stick</button>
+            </td>
+            <td id="DealerButtons" style="visibility: hidden">
+                <button id="DealerTwist">Twist</button>
+                <button id="DealerStick">Stick</button>
+            </td>
+        </tr>
+
+
+    </table>
+
 </div>
 </body>
 </html>

@@ -1,16 +1,21 @@
-var suits = ["H", "C", "S", "D"], pictureSymbols = ["J", "Q", "K", "A"], deck = [],
+var suits = ["H", "C", "S", "D"], pictureSymbols = ["J", "Q", "K", "A"], deck = [], usedDeck = [],
     dealerHand = "Dealer",
     player0Hand = "Player0",
     player1Hand = "Player1",
     player2Hand = "Player2",
-    allHands = [player0Hand, player1Hand, player2Hand, dealerHand],
+    allHands = [player0Hand, player1Hand, player2Hand],
     rules = {
         cardsDealtAtStart: 2,
         bustLimit: 21,
         autoStickLimit: 17
     },
     startScreen,
+    gameScreen,
     playRoundButton,
+    playDealerRoundButton,
+    startDealerRoundButton,
+    resetGameButton,
+    UIButtons,
     outputSection,
     turnNumber = 0
 ;
@@ -19,37 +24,64 @@ function init() {
     createDeck();
     shuffleDeck();
     createPlayers();
+    createDealer();
 }
 
 function startGame(numberOfPlayers) {
     startScreen = document.getElementById("StartScreen");
+    gameScreen = document.getElementById("GameScreen");
     playRoundButton = document.getElementById("PlayRoundButton");
+    playDealerRoundButton = document.getElementById("PlayDealerRoundButton");
+    startDealerRoundButton = document.getElementById("StartDealerRoundButton");
+    resetGameButton = document.getElementById("ResetButton");
+    UIButtons = [playRoundButton, playDealerRoundButton, startDealerRoundButton];
     outputSection = document.getElementById("Output");
     startScreen.style.visibility = "hidden";
     outputSection.style.visibility = "visible";
 
     changePlayerDrivenState(numberOfPlayers);
     dealCards();
-    showCards();
-    checkForEndOfGame();
+    showAllCards();
+    checkForEndOfPlayerGame();
 }
 
 function playGame() {
     showPlayRoundButton(true);
-    playTurn().then(()=> checkForEndOfGame());
+    playTurn().then(checkForEndOfPlayerGame);
 }
 
-function endGame() {
+function playDealerRounds(){
     showPlayRoundButton(true);
+    showPlayDealerRoundButton();
+    checkDealerHand();
+}
+
+function checkDealerHand(){
+    showPlayDealerRoundButton(true);
+    dealerHand.getState() === "Playable"? dealerHand.twist():endGame();
+    checkForEndOfDealerGame();
+}
+
+
+function endGame() {
+    showResetButton();
     declareWinners();
 }
 
-function checkForEndOfGame() {
-    return canWeStillPlay() ? showPlayRoundButton() : endGame()
+function checkForEndOfPlayerGame() {
+    return canWeStillPlay() ? showPlayRoundButton() : showStartDealerRoundButton()
+}
+
+function checkForEndOfDealerGame(){
+    return canDealerStillPlay() ? showPlayDealerRoundButton() : endGame();
 }
 
 function canWeStillPlay() {
     return allHands.filter(player => player.getState() === "Playable").length !== 0;
+}
+
+function canDealerStillPlay() {
+    return dealerHand.getState() === "Playable";
 }
 
 function createCard(sym, suit) {
@@ -89,51 +121,65 @@ function createDeck() {
     }
 }
 
-function createPlayer(playerName) {
+function Player(playerName) {
     var currentHand = [],
         currentName = playerName,
         currentHandValue = 0,
         state = "Playable",
         playerDriven = false,
-        addCard = function () {
+        addCard = () => {
+            if(deck[0] === undefined){deck = shuffle(usedDeck); usedDeck.length=0}
             currentHand.push(deck.shift());
             updateHandValue();
-            showCards();
+            checkCards();
+            showCards({
+                name: currentName,
+                simpleHand: simpleHand,
+                currentHandValue: () => currentHandValue,
+                getState: () => state
+            });
             return Promise.resolve();
         },
-        updateHandValue = function () {
-            currentHandValue = currentHand.reduce(function (total, card) {
-                return total + card.trueValue;
-            }, 0);
-            if (currentHandValue > rules.bustLimit) {
-                currentHandValue = currentHand.reduce(function (total, card) {
-                    if (card.trueValue === 11) {
-                        //found an ace
-                        card.trueValue = 1;
-                    }
-                    return total + card.trueValue;
-                }, 0);
-
-                //is the hand still bust?
-                if (currentHandValue > rules.bustLimit) state = "Bust";
-            }
+        stick = () => {
+            state = "Sticking";
+            showCards({
+                name: currentName,
+                simpleHand: simpleHand,
+                currentHandValue: () => currentHandValue,
+                getState: () => state
+            });
+            return Promise.resolve()
+        },
+        checkCards = () => {
+            if (currentHandValue > rules.bustLimit) state = "Bust";
             if (state === "Playable" && currentHandValue > rules.autoStickLimit && !playerDriven) {
                 state = "Sticking";
             }
         },
-        reset = function () {
+        updateHandValue = () => {
+            currentHandValue = currentHand.reduce((total, card) => total + card.trueValue, 0);
+            if (currentHandValue > rules.bustLimit) {
+                currentHandValue = currentHand.reduce((total, card) => {
+                    if (card.trueValue === 11) card.trueValue = 1;
+                    return total + card.trueValue;
+                }, 0);
+            }
+        },
+        reset = () => {
+            currentHand.map(card => usedDeck.push(card));
             currentHand.length = 0;
             updateHandValue();
             state = "Playable";
-        }
+        },
+        simpleHand = () => currentHand.map(card => (card.symbolicValue + card.suit).toString())
     ;
 
     return {
         twist: addCard,
-        stick:() => {state = "Sticking";return Promise.resolve()},
+        stick: stick,
         hand: currentHand,
         name: currentName,
-        simpleHand: () => currentHand.map(card => (card.symbolicValue + card.suit).toString()),
+        simpleHand: simpleHand,
         value: currentHandValue,
         getState: () => state,
         isPlayerDriven: () => playerDriven,
@@ -143,7 +189,13 @@ function createPlayer(playerName) {
     }
 }
 
-function createPlayers() {allHands = allHands.map(player => createPlayer(player));}
+function createPlayers() {
+    allHands = allHands.map(player => new Player(player));
+}
+
+function createDealer() {
+    dealerHand = new Player(dealerHand)
+}
 
 function changePlayerDrivenState(numberOfPlayers) {
     if (numberOfPlayers > 0) allHands[0].makePlayerDriven(true);
@@ -153,13 +205,13 @@ function changePlayerDrivenState(numberOfPlayers) {
 
 function dealCards() {
     for (var i = 0; i < rules.cardsDealtAtStart; i++) {
-        allHands.map(player => player.twist())
+        allHands.concat(dealerHand).map(player => player.twist())
     }
 }
 
 function declareWinners() {
-    var dealer = allHands[allHands.length - 1],
-        winStates = allHands.map(function (player) {
+    var dealer = dealerHand,
+        winStates = allHands.concat(dealerHand).map(function (player) {
             if (player === dealer) return;
             if (player.getState() === "Bust") {
                 if (dealer.getState() === "Bust") return "Draw";
@@ -174,8 +226,7 @@ function declareWinners() {
 
     winStates.map((p, i) => {
         document.getElementById("Player" + i + "WinState").textContent = p;
-    })
-
+    });
 }
 
 function playerTwists(player, resolve) {
@@ -191,7 +242,7 @@ function awaitPlayerAction(player) {
     return new Promise(resolve => Promise.race([
             new Promise((resolve) => {
                 twist = playerTwists(player, resolve);
-                return document.getElementById(player.name + "Twist").addEventListener("click",twist)
+                return document.getElementById(player.name + "Twist").addEventListener("click", twist)
             }),
             new Promise((resolve) => {
                 stick = playerSticks(player, resolve);
@@ -204,31 +255,28 @@ function awaitPlayerAction(player) {
 }
 
 function hidePlayerActionButtons(player, twist, stick) {
-    document.getElementById(player.name + "Twist").removeEventListener("click",twist,false);
-    document.getElementById(player.name + "Stick").removeEventListener("click",stick,false);
-    document.getElementById(player.name+"Buttons").style.visibility = "hidden";
+    document.getElementById(player.name + "Twist").removeEventListener("click", twist, false);
+    document.getElementById(player.name + "Stick").removeEventListener("click", stick, false);
+    document.getElementById(player.name + "Buttons").style.visibility = "hidden";
     return Promise.resolve();
 }
 
-function showPlayerActionButtons(player){
+function showPlayerActionButtons(player) {
     document.getElementById(player.name + "Buttons").style.visibility = "visible";
     return Promise.resolve(player);
 }
 
 function playTurn() {
     turnNumber++;
-    console.log("hiding play round button");
     showPlayRoundButton(true);
     return new Promise(resolve => {
         return allHands.reduce((promise, player) => {
             return promise.then(() => {
                 if (player.isPlayerDriven()) {
-                    return new Promise((resolve) => {
-                        if (player.getState() !== "Playable") return resolve();
-                        return showPlayerActionButtons(player).then(awaitPlayerAction).then(resolve);
-                    });
+                    if (player.getState() !== "Playable") return Promise.resolve();
+                    return showPlayerActionButtons(player).then(awaitPlayerAction);
                 } else {
-                    return player.getState() === "Playable" ? player.twist(): Promise.resolve();
+                    return player.getState() === "Playable" ? player.twist() : Promise.resolve();
                 }
             })
         }, Promise.resolve())
@@ -237,18 +285,31 @@ function playTurn() {
 }
 
 function showPlayRoundButton(hidden) {
-    console.error("play round button toggle", hidden);
     playRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
+function showPlayDealerRoundButton(hidden) {
+    playDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
+}
+function showStartDealerRoundButton(hidden) {
+    startDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
+}
 
-function showCards() {
+function showResetButton(){
+    UIButtons.map(button => button.style.visibility = "hidden");
+    resetGameButton.style.visibility = "visible";
+}
+
+function showAllCards() {
     document.getElementById("TurnNumber").textContent = "Turn : " + turnNumber;
-    allHands.map(function (playerHand) {
-        document.getElementById(playerHand.name + "Name").textContent = playerHand.name;
-        document.getElementById(playerHand.name + "Hand").textContent = playerHand.simpleHand();
-        document.getElementById(playerHand.name + "Total").textContent = "total : " + playerHand.currentHandValue();
-        document.getElementById(playerHand.name + "PlayState").textContent = playerHand.getState();
-    })
+    allHands.concat(dealerHand).map(showCards);
+}
+
+function showCards(playerHand) {
+    document.getElementById(playerHand.name + "Name").textContent = playerHand.name;
+    document.getElementById(playerHand.name + "Hand").textContent = playerHand.simpleHand();
+    document.getElementById(playerHand.name + "Total").textContent = "total : " + playerHand.currentHandValue();
+    document.getElementById(playerHand.name + "PlayState").textContent = playerHand.getState();
+    console.log("player state :", playerHand.getState());
 }
 
 function shuffleDeck() {
@@ -264,7 +325,9 @@ function shuffle(array) {
 }
 
 function resetGame() {
-
+    allHands.concat(dealerHand).map(hand => hand.reset());
+    startScreen.style.visibility = "visible";
+    gameScreen.style.visibility = "hidden";
 }
 
 init();

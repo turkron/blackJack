@@ -20,7 +20,6 @@
             border-radius: 5px;
             text-align: center;
         }
-
         .hiddenBtn {
             position: absolute;
             top: 80%;
@@ -37,7 +36,6 @@
             text-align: center;
             visibility: hidden;
         }
-
         .output {
             position: absolute;
             top: 33%;
@@ -59,63 +57,67 @@
         <button onclick="startGame(3)" class="btn" style="left: 80%; top: 55%" id="StartButton3P">3 Player</button>
     </div>
 
-    <button onclick="playGame()" class="hiddenBtn" id="PlayRoundButton">Play Next Round</button>
-    <button onclick="resetGame()" class="hiddenBtn" id="ResetButton">Reset Game</button>
-    <table class="output" id="Output">
-        <tr>
-            <td style="align-content: center" id="TurnNumber"></td>
-        </tr>
-        <tr>
-            <td id="Player0Name"></td>
-            <td id="Player1Name"></td>
-            <td id="Player2Name"></td>
-            <td id="DealerName"></td>
-        </tr>
-        <tr>
-            <td id="Player0Hand"></td>
-            <td id="Player1Hand"></td>
-            <td id="Player2Hand"></td>
-            <td id="DealerHand"></td>
-        </tr>
-        <tr>
-            <td id="Player0Total"></td>
-            <td id="Player1Total"></td>
-            <td id="Player2Total"></td>
-            <td id="DealerTotal"></td>
-        </tr>
-        <tr>
-            <td id="Player0PlayState"></td>
-            <td id="Player1PlayState"></td>
-            <td id="Player2PlayState"></td>
-            <td id="DealerPlayState"></td>
-        </tr>
-        <tr>
-            <td id="Player0WinState"></td>
-            <td id="Player1WinState"></td>
-            <td id="Player2WinState"></td>
-            <td id="DealerWinState"></td>
-        </tr>
-        <tr>
-            <td id="Player0Buttons" style="visibility: hidden">
-                <button id="Player0Twist">Twist</button>
-                <button id="Player0Stick">Stick</button>
-            </td>
-            <td id="Player1Buttons" style="visibility: hidden">
-                <button id="Player1Twist">Twist</button>
-                <button id="Player1Stick">Stick</button>
-            </td>
-            <td id="Player2Buttons" style="visibility: hidden">
-                <button id="Player2Twist">Twist</button>
-                <button id="Player2Stick">Stick</button>
-            </td>
-            <td id="DealerButtons" style="visibility: hidden">
-                <button id="DealerTwist">Twist</button>
-                <button id="DealerStick">Stick</button>
-            </td>
-        </tr>
+    <div id="GameScreen">
+        <button onclick="playGame()" class="hiddenBtn" id="PlayRoundButton">Play Next Round</button>
+        <button onclick="playDealerRounds()" class="hiddenBtn" id="StartDealerRoundButton">Start Dealer rounds</button>
+        <button onclick="playDealerRounds()" class="hiddenBtn" id="PlayDealerRoundButton">Play Next Round For Dealer</button>
+        <button onclick="resetGame()" class="hiddenBtn" id="ResetButton">Reset Game</button>
+        <table class="output" id="Output">
+            <tr>
+                <td style="align-content: center" id="TurnNumber"></td>
+            </tr>
+            <tr>
+                <td id="Player0Name"></td>
+                <td id="Player1Name"></td>
+                <td id="Player2Name"></td>
+                <td id="DealerName"></td>
+            </tr>
+            <tr>
+                <td id="Player0Hand"></td>
+                <td id="Player1Hand"></td>
+                <td id="Player2Hand"></td>
+                <td id="DealerHand"></td>
+            </tr>
+            <tr>
+                <td id="Player0Total"></td>
+                <td id="Player1Total"></td>
+                <td id="Player2Total"></td>
+                <td id="DealerTotal"></td>
+            </tr>
+            <tr>
+                <td id="Player0PlayState"></td>
+                <td id="Player1PlayState"></td>
+                <td id="Player2PlayState"></td>
+                <td id="DealerPlayState"></td>
+            </tr>
+            <tr>
+                <td id="Player0WinState"></td>
+                <td id="Player1WinState"></td>
+                <td id="Player2WinState"></td>
+                <td id="DealerWinState"></td>
+            </tr>
+            <tr>
+                <td id="Player0Buttons" style="visibility: hidden">
+                    <button id="Player0Twist">Twist</button>
+                    <button id="Player0Stick">Stick</button>
+                </td>
+                <td id="Player1Buttons" style="visibility: hidden">
+                    <button id="Player1Twist">Twist</button>
+                    <button id="Player1Stick">Stick</button>
+                </td>
+                <td id="Player2Buttons" style="visibility: hidden">
+                    <button id="Player2Twist">Twist</button>
+                    <button id="Player2Stick">Stick</button>
+                </td>
+                <td id="DealerButtons" style="visibility: hidden">
+                    <button id="DealerTwist">Twist</button>
+                    <button id="DealerStick">Stick</button>
+                </td>
+            </tr>
 
 
-    </table>
+        </table>
+    </div>
 
 </div>
 </body>

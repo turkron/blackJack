@@ -4,7 +4,6 @@ var suits = ["H", "C", "S", "D"], pictureSymbols = ["J", "Q", "K", "A"], deck = 
     player1Hand = "Player1",
     player2Hand = "Player2",
     allHands = [player0Hand, player1Hand, player2Hand, dealerHand],
-    hands = [player0Hand, player1Hand, player2Hand],
     rules = {
         cardsDealtAtStart: 2,
         bustLimit: 21,
@@ -183,25 +182,30 @@ function playerTwists(player, resolve) {
     return () => player.twist().then(resolve);
 }
 
+function playerSticks(player, resolve) {
+    return () => player.stick().then(resolve);
+}
+
 function awaitPlayerAction(player) {
-    let obj;
+    let twist, stick;
     return new Promise(resolve => Promise.race([
             new Promise((resolve) => {
-                obj = playerTwists(player, resolve);
-                return document.getElementById(player.name + "Twist").addEventListener("click",obj)
+                twist = playerTwists(player, resolve);
+                return document.getElementById(player.name + "Twist").addEventListener("click",twist)
             }),
             new Promise((resolve) => {
-                return document.getElementById(player.name + "Stick").addEventListener("click", () => player.stick().then(resolve))
+                stick = playerSticks(player, resolve);
+                return document.getElementById(player.name + "Stick").addEventListener("click", stick)
             })
         ])
-            .then(() => hidePlayerActionButtons(player, obj))
+            .then(() => hidePlayerActionButtons(player, twist, stick))
             .then(resolve)
     )
 }
 
-function hidePlayerActionButtons(player, obj) {
-    document.getElementById(player.name + "Twist").removeEventListener("click",obj,false);
-    document.getElementById(player.name + "Stick").removeEventListener("click",() => player.stick().then(resolve),false);
+function hidePlayerActionButtons(player, twist, stick) {
+    document.getElementById(player.name + "Twist").removeEventListener("click",twist,false);
+    document.getElementById(player.name + "Stick").removeEventListener("click",stick,false);
     document.getElementById(player.name+"Buttons").style.visibility = "hidden";
     return Promise.resolve();
 }

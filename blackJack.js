@@ -50,20 +50,21 @@ function playGame() {
     playTurn().then(checkForEndOfPlayerGame);
 }
 
-function playDealerRounds(){
+function playDealerRounds() {
     showPlayRoundButton(true);
     showPlayDealerRoundButton();
     checkDealerHand();
 }
 
-function checkDealerHand(){
+function checkDealerHand() {
     showPlayDealerRoundButton(true);
-    dealerHand.getState() === "Playable"? dealerHand.twist():endGame();
+    dealerHand.getState() === "Playable" ? dealerHand.twist() : endGame();
     checkForEndOfDealerGame();
 }
 
 
 function endGame() {
+    showAllCards();
     showResetButton();
     declareWinners();
 }
@@ -72,7 +73,7 @@ function checkForEndOfPlayerGame() {
     return canWeStillPlay() ? showPlayRoundButton() : showStartDealerRoundButton()
 }
 
-function checkForEndOfDealerGame(){
+function checkForEndOfDealerGame() {
     return canDealerStillPlay() ? showPlayDealerRoundButton() : endGame();
 }
 
@@ -81,6 +82,7 @@ function canWeStillPlay() {
 }
 
 function canDealerStillPlay() {
+    console.log(dealerHand.getState());
     return dealerHand.getState() === "Playable";
 }
 
@@ -121,83 +123,114 @@ function createDeck() {
     }
 }
 
-function Player(playerName) {
-    var currentHand = [],
-        currentName = playerName,
-        currentHandValue = 0,
-        state = "Playable",
-        playerDriven = false,
-        addCard = () => {
-            if(deck[0] === undefined){deck = shuffle(usedDeck); usedDeck.length=0}
-            currentHand.push(deck.shift());
-            updateHandValue();
-            checkCards();
-            showCards({
-                name: currentName,
-                simpleHand: simpleHand,
-                currentHandValue: () => currentHandValue,
-                getState: () => state
-            });
-            return Promise.resolve();
-        },
-        stick = () => {
-            state = "Sticking";
-            showCards({
-                name: currentName,
-                simpleHand: simpleHand,
-                currentHandValue: () => currentHandValue,
-                getState: () => state
-            });
-            return Promise.resolve()
-        },
-        checkCards = () => {
-            if (currentHandValue > rules.bustLimit) state = "Bust";
-            if (state === "Playable" && currentHandValue > rules.autoStickLimit && !playerDriven) {
-                state = "Sticking";
-            }
-        },
-        updateHandValue = () => {
-            currentHandValue = currentHand.reduce((total, card) => total + card.trueValue, 0);
-            if (currentHandValue > rules.bustLimit) {
-                currentHandValue = currentHand.reduce((total, card) => {
-                    if (card.trueValue === 11) card.trueValue = 1;
-                    return total + card.trueValue;
-                }, 0);
-            }
-        },
-        reset = () => {
-            currentHand.map(card => usedDeck.push(card));
-            currentHand.length = 0;
-            updateHandValue();
-            state = "Playable";
-        },
-        simpleHand = () => currentHand.map(card => (card.symbolicValue + card.suit).toString())
-    ;
-
-    return {
-        twist: addCard,
-        stick: stick,
-        hand: currentHand,
-        name: currentName,
-        simpleHand: simpleHand,
-        value: currentHandValue,
-        getState: () => state,
-        isPlayerDriven: () => playerDriven,
-        makePlayerDriven: (state) => playerDriven = state || true,
-        currentHandValue: () => currentHandValue,
-        reset: reset
-    }
-}
-
 function createPlayers() {
     allHands = allHands.map(player => new Player(player));
 }
 
 function createDealer() {
-    dealerHand = new Player(dealerHand)
+    dealerHand = new Dealer(dealerHand)
+}
+
+class Player {
+
+    constructor(playerName) {
+        this.hand = [];
+        this.name = playerName;
+        this.handValue = 0;
+        this.hasBurnt = false;
+        this.state = "Playable";
+        this.playerDriven = false;
+    };
+
+    twist(){
+        if (deck[0] === undefined) {
+            deck = shuffle([...usedDeck]);usedDeck.length = 0;
+            console.log(deck);
+        }
+        this.hand.push(deck.shift());
+        this.updateHandValue();
+        this.checkCards();
+        showCards({
+            name: this.name,
+            simpleHand: this.simpleHand,
+            currentHandValue: () => this.handValue,
+            getState: () => this.state
+        });
+        return Promise.resolve();
+    };
+
+    stick () {
+        this.state = "Sticking";
+        showCards({
+            name: this.name,
+            simpleHand: this.simpleHand,
+            currentHandValue: () => this.handValue,
+            getState: () => this.state
+        });
+        return Promise.resolve()
+    };
+
+    burn () {
+        this.reset();
+        this.hasBurnt = true;
+        return Promise.all(
+            [...Array(rules.cardsDealtAtStart)].map(()=>this.twist())
+        )
+    }
+
+    checkCards() {
+        if (this.handValue > rules.bustLimit) this.state = "Bust";
+        if (this.state === "Playable" && this.handValue > rules.autoStickLimit && !this.playerDriven) {
+            this.state = "Sticking";
+        }
+    };
+
+    updateHandValue() {
+        this.handValue = this.hand.reduce((total, card) => total + card.trueValue, 0);
+        if (this.handValue > rules.bustLimit) {
+            this.handValue = this.hand.reduce((total, card) => {
+                if (card.trueValue === 11) card.trueValue = 1;
+                return total + card.trueValue;
+            }, 0);
+        }
+    };
+
+    reset() {
+        this.hand.map(card => usedDeck.push(card));
+        this.hand.length = 0;
+        this.updateHandValue();
+        this.hasBurnt = false;
+        this.state = "Playable";
+    };
+
+    simpleHand = () => this.hand.map(card => (card.symbolicValue + card.suit).toString());
+    currentHandValue = () => this.handValue;
+    getState = () => this.state;
+    isPlayerDriven = () => this.playerDriven;
+    makePlayerDriven = (state) => this.playerDriven = state;
+}
+
+class Dealer extends Player {
+    constructor (name){
+        super(name, "Dealer");
+    }
+    twist(dealTurn){
+        return super.twist().then(()=>{
+            if(dealTurn===1) {
+                showCards({
+                    name: this.name,
+                    simpleHand: () => [(this.hand[0].symbolicValue + this.hand[0].suit).toString(), "???"],
+                    currentHandValue: () => this.hand[0].trueValue,
+                    getState: () => ""
+                });
+            }
+            return Promise.resolve();
+        });
+    }
 }
 
 function changePlayerDrivenState(numberOfPlayers) {
+    allHands.map(player => player.makePlayerDriven(false));
     if (numberOfPlayers > 0) allHands[0].makePlayerDriven(true);
     if (numberOfPlayers > 1) allHands[1].makePlayerDriven(true);
     if (numberOfPlayers > 2) allHands[2].makePlayerDriven(true);
@@ -205,7 +238,7 @@ function changePlayerDrivenState(numberOfPlayers) {
 
 function dealCards() {
     for (var i = 0; i < rules.cardsDealtAtStart; i++) {
-        allHands.concat(dealerHand).map(player => player.twist())
+        allHands.concat(dealerHand).map(player => player.twist(i))
     }
 }
 
@@ -232,13 +265,15 @@ function declareWinners() {
 function playerTwists(player, resolve) {
     return () => player.twist().then(resolve);
 }
-
 function playerSticks(player, resolve) {
     return () => player.stick().then(resolve);
 }
+function playerBurns(player, resolve){
+    return () => player.burn().then(resolve);
+}
 
 function awaitPlayerAction(player) {
-    let twist, stick;
+    let twist, stick, burn;
     return new Promise(resolve => Promise.race([
             new Promise((resolve) => {
                 twist = playerTwists(player, resolve);
@@ -247,16 +282,25 @@ function awaitPlayerAction(player) {
             new Promise((resolve) => {
                 stick = playerSticks(player, resolve);
                 return document.getElementById(player.name + "Stick").addEventListener("click", stick)
+            }),
+            new Promise((resolve) => {
+                burn = playerBurns(player, resolve);
+                let button = document.getElementById(player.name + "Burn");
+
+                button.disabled = player.hasBurnt || player.currentHandValue() > 14;
+
+                return button.addEventListener("click", burn)
             })
         ])
-            .then(() => hidePlayerActionButtons(player, twist, stick))
+            .then(() => hidePlayerActionButtons(player, twist, stick, burn))
             .then(resolve)
     )
 }
 
-function hidePlayerActionButtons(player, twist, stick) {
+function hidePlayerActionButtons(player, twist, stick, burn) {
     document.getElementById(player.name + "Twist").removeEventListener("click", twist, false);
     document.getElementById(player.name + "Stick").removeEventListener("click", stick, false);
+    document.getElementById(player.name + "Burn").removeEventListener("click", burn, false);
     document.getElementById(player.name + "Buttons").style.visibility = "hidden";
     return Promise.resolve();
 }
@@ -287,14 +331,16 @@ function playTurn() {
 function showPlayRoundButton(hidden) {
     playRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
+
 function showPlayDealerRoundButton(hidden) {
     playDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
+
 function showStartDealerRoundButton(hidden) {
     startDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
 
-function showResetButton(){
+function showResetButton() {
     UIButtons.map(button => button.style.visibility = "hidden");
     resetGameButton.style.visibility = "visible";
 }
@@ -307,9 +353,9 @@ function showAllCards() {
 function showCards(playerHand) {
     document.getElementById(playerHand.name + "Name").textContent = playerHand.name;
     document.getElementById(playerHand.name + "Hand").textContent = playerHand.simpleHand();
+    playerHand.simpleHand().map(cardName => {console.log(cardName)});
     document.getElementById(playerHand.name + "Total").textContent = "total : " + playerHand.currentHandValue();
     document.getElementById(playerHand.name + "PlayState").textContent = playerHand.getState();
-    console.log("player state :", playerHand.getState());
 }
 
 function shuffleDeck() {
@@ -328,6 +374,12 @@ function resetGame() {
     allHands.concat(dealerHand).map(hand => hand.reset());
     startScreen.style.visibility = "visible";
     gameScreen.style.visibility = "hidden";
+    resetGameButton.style.visibility = "hidden";
+    outputSection.style.visibility = "hidden";
+    //resetWinStates
+    ["", "", ""].map((p, i) => {
+        document.getElementById("Player" + i + "WinState").textContent = p;
+    });
 }
 
 init();

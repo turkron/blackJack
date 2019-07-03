@@ -7,7 +7,7 @@
     <style>
         .btn {
             position: absolute;
-            top: 45%;
+            top: 10%;
             left: 50%;
             transform: translate(-50%, -50%);
             -ms-transform: translate(-50%, -50%);
@@ -36,65 +36,135 @@
             text-align: center;
             visibility: hidden;
         }
-        .output {
+        table.center{
+            margin-left: auto;
+            margin-right: auto;
+        }
+        input.playerNames{
             position: absolute;
-            top: 33%;
-            align-content: center;
-            color: black;
-            font-size: 16px;
-            table-layout: auto;
-            width: 100%;
+            top:25%
+        }
+        .card {
+            width: auto;
+            height: auto;
         }
     </style>
 </head>
-<body>
+<body style="background-image: url(./poker_cards_chips_2d/background.jpg)">
 <script type="text/javascript" src="blackJack.js"></script>
 <div class="container">
     <div id="StartScreen">
         <button onclick="startGame(0)" class="btn" id="StartButton">Start Game</button>
-        <button onclick="startGame(1)" class="btn" style="left: 20%; top: 55%" id="StartButton1P">1 Player</button>
-        <button onclick="startGame(2)" class="btn" style="left: 50%; top: 55%" id="StartButton2P">2 Player</button>
-        <button onclick="startGame(3)" class="btn" style="left: 80%; top: 55%" id="StartButton3P">3 Player</button>
+        <button onclick="startGame(1)" class="btn" style="left: 20%; top: 20%" id="StartButton1P">1 Player</button>
+        <button onclick="startGame(2)" class="btn" style="left: 50%; top: 20%" id="StartButton2P">2 Player</button>
+        <button onclick="startGame(3)" class="btn" style="left: 80%; top: 20%" id="StartButton3P">3 Player</button>
+        <input type="text" id="Player0GivenName" placeholder="Player1 name" class="playerNames" style="left: 12%;">
+        <input type="text" id="Player1GivenName" placeholder="Player2 name" class="playerNames" style="left: 42%;">
+        <input type="text" id="Player2GivenName" placeholder="Player3 name" class="playerNames" style="left: 72%;">
+        <button onclick="setDeck('deck_1')" class="btn" style="left: 30%; top: 50%" id="Deck_1">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_1.png" alt="">
+        </button>
+        <button onclick="setDeck('deck_2')" class="btn" style="left: 50%; top: 50%" id="Deck_2">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_2.png" alt="">
+        </button>
+        <button onclick="setDeck('deck_3')" class="btn" style="left: 70%; top: 50%" id="Deck_3">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_3.png" alt="">
+        </button>
+        <button onclick="setDeck('deck_4')" class="btn" style="left: 30%; top: 75%" id="Deck_4">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_4.png" alt="">
+        </button>
+        <button onclick="setDeck('deck_5')" class="btn" style="left: 50%; top: 75%" id="Deck_5">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_5.png" alt="">
+        </button>
+        <button onclick="setDeck('deck_6')" class="btn" style="left: 70%; top: 75%" id="Deck_6">
+            <img src="poker_cards_chips_2d/Set_B/small/deck_6.png" alt="">
+        </button>
     </div>
 
     <div id="GameScreen">
         <button onclick="playGame()" class="hiddenBtn" id="PlayRoundButton">Play Next Round</button>
         <button onclick="playDealerRounds()" class="hiddenBtn" id="StartDealerRoundButton">Start Dealer rounds</button>
-        <button onclick="playDealerRounds()" class="hiddenBtn" id="PlayDealerRoundButton">Play Next Round For Dealer</button>
+        <button onclick="playDealerRounds()" class="hiddenBtn" id="PlayDealerRoundButton">Play Next Round For Dealer
+        </button>
         <button onclick="resetGame()" class="hiddenBtn" id="ResetButton">Reset Game</button>
-        <table class="output" id="Output">
+        <table class="center" id="DealerOutput">
             <tr>
-                <td style="align-content: center" id="TurnNumber"></td>
+                <td id="DealerName"></td>
             </tr>
+            <tr>
+                <td id="DealerHand">
+                    <img src="" id="DealerCard0" alt="" class="card">
+                    <img src="" id="DealerCard1" alt="" class="card">
+                    <img src="" id="DealerCard2" alt="" class="card">
+                    <img src="" id="DealerCard3" alt="" class="card">
+                    <img src="" id="DealerCard4" alt="" class="card">
+                    <img src="" id="DealerCard5" alt="" class="card">
+                </td>
+            </tr>
+            <tr>
+                <td id="DealerTotal"></td>
+            </tr>
+            <tr>
+                <td id="DealerPlayState"></td>
+            </tr>
+            <tr>
+                <td id="DealerWinState"></td>
+            </tr>
+            <tr>
+                <td id="DealerButtons" style="visibility: hidden">
+                    <button id="DealerTwist">Twist</button>
+                    <button id="DealerStick">Stick</button>
+                    <button id="DealerBurn">Burn</button>
+                </td>
+            </tr>
+        </table>
+        <table class="center" id="Output">
+            <tr style="text-align: center" id="TurnNumber"></tr>
             <tr>
                 <td id="Player0Name"></td>
                 <td id="Player1Name"></td>
                 <td id="Player2Name"></td>
-                <td id="DealerName"></td>
             </tr>
             <tr>
-                <td id="Player0Hand"></td>
-                <td id="Player1Hand"></td>
-                <td id="Player2Hand"></td>
-                <td id="DealerHand"></td>
+                <td id="Player0Hand">
+                    <img src="" id="Player0Card0" alt="" class="card">
+                    <img src="" id="Player0Card1" alt="" class="card">
+                    <img src="" id="Player0Card2" alt="" class="card">
+                    <img src="" id="Player0Card3" alt="" class="card">
+                    <img src="" id="Player0Card4" alt="" class="card">
+                    <img src="" id="Player0Card5" alt="" class="card">
+                </td>
+                <td id="Player1Hand">
+                    <img src="" id="Player1Card0" alt="" class="card">
+                    <img src="" id="Player1Card1" alt="" class="card">
+                    <img src="" id="Player1Card2" alt="" class="card">
+                    <img src="" id="Player1Card3" alt="" class="card">
+                    <img src="" id="Player1Card4" alt="" class="card">
+                    <img src="" id="Player1Card5" alt="" class="card">
+                </td>
+                <td id="Player2Hand">
+                    <img src="" id="Player2Card0" alt="" class="card">
+                    <img src="" id="Player2Card1" alt="" class="card">
+                    <img src="" id="Player2Card2" alt="" class="card">
+                    <img src="" id="Player2Card3" alt="" class="card">
+                    <img src="" id="Player2Card4" alt="" class="card">
+                    <img src="" id="Player2Card5" alt="" class="card">
+                </td>
             </tr>
             <tr>
                 <td id="Player0Total"></td>
                 <td id="Player1Total"></td>
                 <td id="Player2Total"></td>
-                <td id="DealerTotal"></td>
             </tr>
             <tr>
                 <td id="Player0PlayState"></td>
                 <td id="Player1PlayState"></td>
                 <td id="Player2PlayState"></td>
-                <td id="DealerPlayState"></td>
             </tr>
             <tr>
                 <td id="Player0WinState"></td>
                 <td id="Player1WinState"></td>
                 <td id="Player2WinState"></td>
-                <td id="DealerWinState"></td>
             </tr>
             <tr>
                 <td id="Player0Buttons" style="visibility: hidden">
@@ -112,13 +182,7 @@
                     <button id="Player2Stick">Stick</button>
                     <button id="Player2Burn">Burn</button>
                 </td>
-                <td id="DealerButtons" style="visibility: hidden">
-                    <button id="DealerTwist">Twist</button>
-                    <button id="DealerStick">Stick</button>
-                    <button id="DealerBurn">Burn</button>
-                </td>
             </tr>
-
         </table>
     </div>
 

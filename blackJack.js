@@ -166,6 +166,10 @@ class Player {
             return;
         }
         if (this.handValue > rules.autoStickLimit) {
+            if(this.hand.length === 2 && this.handValue === 21){
+                this.state = "BlackJack!";
+                return;
+            }
             if(override || !this.playerDriven){
                 this.state = "Sticking";
                 return;
@@ -191,7 +195,6 @@ class Player {
         this.state = "Playable";
     };
 
-    getGivenName = () => customNames[this.name];
     simpleHand = () => this.hand.map(card => (card.symbolicValue + card.suit).toString());
     currentHandValue = () => this.handValue;
     getState = () => this.state;
@@ -344,15 +347,17 @@ function dealCards() {
 
 function declareWinners() {
     var dealer = dealerHand,
-        winStates = allHands.concat(dealerHand).map(function (player) {
+        winStates = allHands.map(function (player) {
             if (player === dealer) return;
+            if(player.getState() === "BlackJack!"){
+                return dealer.getState() === "BlackJack!" ? "Draw" : "Win!";
+            }
             if (player.getState() === "Bust") {
                 if (dealer.getState() === "Bust") return "Draw";
                 return "Lose";
             }
             if (dealer.getState() === "Bust") return "Win!";
-            return player.currentHandValue() > dealer.currentHandValue() ?
-                "Win!" :
+            return player.currentHandValue() > dealer.currentHandValue() ? "Win!" :
                 player.currentHandValue() === dealer.currentHandValue() ?
                     "Draw" : "Lose";
         }).filter(e => typeof e === "string");

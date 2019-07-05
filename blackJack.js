@@ -165,11 +165,15 @@ class Player {
             this.state = "Bust";
             return;
         }
+        if(this.hand.length === 5){
+            this.state = "5 Card Trick!";
+            return;
+        }
+        if(this.hand.length === 2 && this.handValue === 21){
+            this.state = "BlackJack!";
+            return;
+        }
         if (this.handValue > rules.autoStickLimit) {
-            if(this.hand.length === 2 && this.handValue === 21){
-                this.state = "BlackJack!";
-                return;
-            }
             if(override || !this.playerDriven){
                 this.state = "Sticking";
                 return;
@@ -188,7 +192,10 @@ class Player {
     };
 
     reset() {
-        this.hand.map(card => deck.usedCards.push(card));
+        this.hand.map(card => {
+            if(card.trueValue === 1) card.trueValue = 11;
+            deck.usedCards.push(card)
+        });
         this.hand.length = 0;
         this.updateHandValue();
         this.hasBurnt = false;
@@ -349,13 +356,9 @@ function declareWinners() {
     var dealer = dealerHand,
         winStates = allHands.map(function (player) {
             if (player === dealer) return;
-            if(player.getState() === "BlackJack!"){
-                return dealer.getState() === "BlackJack!" ? "Draw" : "Win!";
-            }
-            if (player.getState() === "Bust") {
-                if (dealer.getState() === "Bust") return "Draw";
-                return "Lose";
-            }
+            if (player.getState() === "5 Card Trick!") return dealer.getState() === "5 Card Trick!" ? "Draw" : "Win!";
+            if (player.getState() === "BlackJack!") return dealer.getState() === "BlackJack!" ? "Draw" : "Win!";
+            if (player.getState() === "Bust") return dealer.getState() === "Bust"? "Draw": "Lose";
             if (dealer.getState() === "Bust") return "Win!";
             return player.currentHandValue() > dealer.currentHandValue() ? "Win!" :
                 player.currentHandValue() === dealer.currentHandValue() ?

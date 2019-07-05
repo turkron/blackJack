@@ -1,49 +1,134 @@
-var suits = ["H", "C", "S", "D"], pictureSymbols = ["J", "Q", "K", "A"], deck = [], usedDeck = [], deckName = "deck_1",
-    customNames = {
-        Player0:"Player0",
-        Player1:"Player1",
-        Player2:"Player2",
-        Dealer:"Dealer"
+var customNames = {
+        Player0: "Player0",
+        Player1: "Player1",
+        Player2: "Player2",
+        Dealer: "Dealer"
+    },
+    rules = {
+        cardsDealtAtStart: 2,
+        bustLimit: 21,
+        autoStickLimit: 17,
+        turnTimeoutLimit:10 //in seconds
     },
     dealerHand = "Dealer",
     player0Hand = "Player0",
     player1Hand = "Player1",
     player2Hand = "Player2",
     allHands = [player0Hand, player1Hand, player2Hand],
-    rules = {
-        cardsDealtAtStart: 2,
-        bustLimit: 21,
-        autoStickLimit: 17
-    },
+    deck,
     startScreen,
     gameScreen,
     playRoundButton,
     playDealerRoundButton,
     startDealerRoundButton,
-    resetGameButton,
+    endScreenDiv,
     UIButtons,
-    turnNumber = 0
+    turnNumber = 0,
+    previousNumberOfPlayers = 0
 ;
+
 class Deck {
 
+    #pictureSymbols = ["J", "Q", "K", "A"];
+    #suits = ["H", "C", "S", "D"];
+    #currentSuit = -1;
+    usedCards = [];
+    #inventory = [];
+    #deckName = "deck_1";
+    #deckCount;
+    #deckImage;
+    #deckContainer;
+
+    constructor() {
+        while (this.#inventory.length < 52) {
+            this.#currentSuit++;
+            this.#inventory = this.#inventory.concat(this.#createSuit(this.#currentSuit));
+        }
+        this.#deckCount = document.getElementById("CardCount");
+        this.#deckImage = document.getElementById("Deck");
+        this.#deckContainer = document.getElementById("DeckContainer");
+        this.#shuffleDeck();
+    };
+
+    get name() {
+        return this.#deckName
+    };
+
+    set name(name) {
+        this.#deckName = name
+    };
+
+    #createCard = (sym, suit) => {
+        var trueValue = -1;
+        if (typeof sym !== "string") {
+            trueValue = sym;
+        } else {
+            if (sym === "A") {
+                trueValue = 11;
+            } else {
+                trueValue = 10;
+            }
+        }
+        return {
+            symbolicValue: sym.toString(), //1,2,3,K,Q,J,A
+            suit: this.#suits[suit], //H,C,S,D
+            trueValue: trueValue //1,2,3,10,10,10,[1,11]
+        }
+    };
+
+    #createSuit = (suitValue) => {
+        var suitTemplate = [];
+        for (var i = 2; i <= 10; i++) {
+            suitTemplate.push(this.#createCard(i, suitValue));
+        }
+        this.#pictureSymbols.map(sym => suitTemplate.push(this.#createCard(sym, suitValue)));
+        return suitTemplate;
+    };
+
+    #replenishDeck = () => {
+        this.#inventory = [...this.usedCards];
+        this.#shuffleDeck();
+        this.usedCards.length = 0;
+    };
+
+    drawTopCard() {
+        if (this.#inventory[0] === undefined) this.#replenishDeck();
+        this.#updateCount();
+        return this.#inventory.shift();
+    }
+
+    showDeck = () => {
+        if (this.#deckImage === null) this.#deckImage = document.getElementById("Deck");
+        this.#deckImage.src = "poker_cards_chips_2d/Set_B/small/" + this.#deckName + ".png";
+    };
+
+    #updateCount = () => {
+        if (this.#deckCount === null) this.#deckCount = document.getElementById("CardCount");
+        this.#deckCount.textContent = "Count:" + this.#inventory.length;
+        this.#deckImage.style.visibility = this.#inventory.length === 0 ? "hidden" : "visible";
+    };
+
+    #shuffleDeck = () => {
+        for (let i = this.#inventory.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+            [this.#inventory[i], this.#inventory[j]] = [this.#inventory[j], this.#inventory[i]]; // swap elements
+        }
+    };
 }
+
 class Player {
 
     constructor(playerName) {
         this.hand = [];
         this.name = playerName;
-        this.givenName = playerName;
         this.handValue = 0;
         this.hasBurnt = false;
         this.state = "Playable";
         this.playerDriven = false;
     };
 
-    twist(){
-        if (deck[0] === undefined) {
-            deck = shuffle([...usedDeck]);usedDeck.length = 0;
-        }
-        this.hand.push(deck.shift());
+    twist() {
+        this.hand.push(deck.drawTopCard());
         this.updateHandValue();
         this.checkCards();
         showCards({
@@ -55,7 +140,7 @@ class Player {
         return Promise.resolve();
     };
 
-    stick () {
+    stick() {
         this.state = "Sticking";
         showCards({
             name: this.name,
@@ -66,18 +151,25 @@ class Player {
         return Promise.resolve()
     };
 
-    burn () {
+    burn() {
         this.reset();
         this.hasBurnt = true;
         return Promise.all(
-            [...Array(rules.cardsDealtAtStart)].map(()=>this.twist())
+            [...Array(rules.cardsDealtAtStart)].map(() => this.twist())
         )
     }
 
-    checkCards() {
-        if (this.handValue > rules.bustLimit) this.state = "Bust";
-        if (this.state === "Playable" && this.handValue > rules.autoStickLimit && !this.playerDriven) {
-            this.state = "Sticking";
+    checkCards(override) {
+        if (this.state !== "Playable") return;
+        if (this.handValue > rules.bustLimit) {
+            this.state = "Bust";
+            return;
+        }
+        if (this.handValue > rules.autoStickLimit) {
+            if(override || !this.playerDriven){
+                this.state = "Sticking";
+                return;
+            }
         }
     };
 
@@ -92,7 +184,7 @@ class Player {
     };
 
     reset() {
-        this.hand.map(card => usedDeck.push(card));
+        this.hand.map(card => deck.usedCards.push(card));
         this.hand.length = 0;
         this.updateHandValue();
         this.hasBurnt = false;
@@ -106,16 +198,18 @@ class Player {
     isPlayerDriven = () => this.playerDriven;
     makePlayerDriven = (state) => this.playerDriven = state;
 }
+
 class Dealer extends Player {
-    constructor (name){
+    constructor(name) {
         super(name, "Dealer");
     }
-    twist(dealTurn){
-        return super.twist().then(()=>{
-            if(dealTurn===1) {
+
+    twist(dealTurn) {
+        return super.twist().then(() => {
+            if (dealTurn === 1) {
                 showCards({
                     name: this.name,
-                    simpleHand: () => [(this.hand[0].symbolicValue + this.hand[0].suit).toString(), getDeckName()],
+                    simpleHand: () => [(this.hand[0].symbolicValue + this.hand[0].suit).toString(), deck.name],
                     currentHandValue: () => this.hand[0].trueValue,
                     getState: () => ""
                 });
@@ -125,10 +219,8 @@ class Dealer extends Player {
     }
 }
 
-
 function init() {
-    createDeck();
-    shuffleDeck();
+    deck = new Deck();
     createPlayers();
     createDealer();
 }
@@ -139,15 +231,24 @@ function startGame(numberOfPlayers) {
     playRoundButton = document.getElementById("PlayRoundButton");
     playDealerRoundButton = document.getElementById("PlayDealerRoundButton");
     startDealerRoundButton = document.getElementById("StartDealerRoundButton");
-    resetGameButton = document.getElementById("ResetButton");
+    endScreenDiv = document.getElementById("EndGameScreen");
     UIButtons = [playRoundButton, playDealerRoundButton, startDealerRoundButton];
     gameScreen.style.visibility = "visible";
     startScreen.style.visibility = "hidden";
-
+    setCustomNames();
+    deck.showDeck();
     changePlayerDrivenState(numberOfPlayers);
     dealCards();
     showAllCards();
     checkForEndOfPlayerGame();
+}
+
+function setCustomNames(){
+    let nameFields = Array.from(document.getElementsByClassName("playerNames"));
+    allHands.map((player,i) => {
+        if(nameFields[i].value === "") return;
+        customNames[player.name] = nameFields[i].value;
+    });
 }
 
 function playGame() {
@@ -157,31 +258,42 @@ function playGame() {
 
 function endGame() {
     showAllCards();
-    showResetButton();
+    showEndScreenButtons();
     declareWinners();
 }
 
 function awaitPlayerAction(player) {
-    let twist, stick, burn;
+    let twist, stick, burn, resetCounter, timer;
     return new Promise(resolve => Promise.race([
-            new Promise((resolve) => {
+            new Promise(resolve => {
                 twist = playerTwists(player, resolve);
                 return document.getElementById(player.name + "Twist").addEventListener("click", twist)
             }),
-            new Promise((resolve) => {
+            new Promise(resolve => {
                 stick = playerSticks(player, resolve);
                 return document.getElementById(player.name + "Stick").addEventListener("click", stick)
             }),
-            new Promise((resolve) => {
+            new Promise(resolve => {
                 burn = playerBurns(player, resolve);
                 let button = document.getElementById(player.name + "Burn");
-
                 button.disabled = player.hasBurnt || player.currentHandValue() > 14;
-
                 return button.addEventListener("click", burn)
+            }),
+            new Promise(resolve => {
+                let afk = playerIsAFK(player,resolve);
+                resetCounter  = () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(afk, timeLimit*1000);
+                };
+                let timeLimit = 10;
+                timer = setTimeout(afk, timeLimit*1000);
+
+                document.body.addEventListener("mousemove", resetCounter);
+                return timer;
+                //set timeout on mouse, reset if the player doesnt interact.
             })
         ])
-            .then(() => hidePlayerActionButtons(player, twist, stick, burn))
+            .then(() => hidePlayerActionButtons(player, twist, stick, burn, resetCounter, timer))
             .then(resolve)
     )
 }
@@ -189,63 +301,37 @@ function awaitPlayerAction(player) {
 function canWeStillPlay() {
     return allHands.filter(player => player.getState() === "Playable").length !== 0;
 }
+
 function canDealerStillPlay() {
     return dealerHand.getState() === "Playable";
 }
+
 function checkForEndOfPlayerGame() {
     return canWeStillPlay() ? showPlayRoundButton() : showStartDealerRoundButton()
 }
+
 function checkForEndOfDealerGame() {
     return canDealerStillPlay() ? showPlayDealerRoundButton() : endGame();
 }
+
 function checkDealerHand() {
     showPlayDealerRoundButton(true);
     dealerHand.getState() === "Playable" ? dealerHand.twist() : endGame();
     checkForEndOfDealerGame();
 }
+
 function changePlayerDrivenState(numberOfPlayers) {
+    previousNumberOfPlayers = numberOfPlayers;
     allHands.map(player => player.makePlayerDriven(false));
     if (numberOfPlayers > 0) allHands[0].makePlayerDriven(true);
     if (numberOfPlayers > 1) allHands[1].makePlayerDriven(true);
     if (numberOfPlayers > 2) allHands[2].makePlayerDriven(true);
 }
-function createCard(sym, suit) {
-    var trueValue = -1;
-    if (typeof sym !== "string") {
-        trueValue = sym;
-    } else {
-        if (sym === "A") {
-            trueValue = 11;
-        } else {
-            trueValue = 10;
-        }
-    }
-    return {
-        symbolicValue: sym.toString(), //1,2,3,K,Q,J,A
-        suit: suits[suit], //H,C,S,D
-        trueValue: trueValue //1,2,3,10,10,10,[1,11]
-    }
-}
-function createSuit(suitValue) {
-    var suitTemplate = [];
-    for (var i = 2; i <= 10; i++) {
-        suitTemplate.push(createCard(i, suitValue));
-    }
-    pictureSymbols.map(function (sym) {
-        suitTemplate.push(createCard(sym, suitValue));
-    });
-    return suitTemplate;
-}
-function createDeck() {
-    var currentSuit = -1;
-    while (deck.length < 52) {
-        currentSuit++;
-        deck = deck.concat(createSuit(currentSuit));
-    }
-}
+
 function createPlayers() {
     allHands = allHands.map(player => new Player(player));
 }
+
 function createDealer() {
     dealerHand = new Dealer(dealerHand)
 }
@@ -255,6 +341,7 @@ function dealCards() {
         allHands.concat(dealerHand).map(player => player.twist(i))
     }
 }
+
 function declareWinners() {
     var dealer = dealerHand,
         winStates = allHands.concat(dealerHand).map(function (player) {
@@ -275,10 +362,12 @@ function declareWinners() {
     });
 }
 
-function hidePlayerActionButtons(player, twist, stick, burn) {
+function hidePlayerActionButtons(player, twist, stick, burn, resetCounter, timer) {
     document.getElementById(player.name + "Twist").removeEventListener("click", twist, false);
     document.getElementById(player.name + "Stick").removeEventListener("click", stick, false);
     document.getElementById(player.name + "Burn").removeEventListener("click", burn, false);
+    document.body.removeEventListener("mousemove",resetCounter,false);
+    clearTimeout(timer);
     document.getElementById(player.name + "Buttons").style.visibility = "hidden";
     return Promise.resolve();
 }
@@ -289,90 +378,98 @@ function playTurn() {
     return new Promise(resolve => {
         return allHands.reduce((promise, player) => {
             return promise.then(() => {
-                if (player.isPlayerDriven()) {
-                    if (player.getState() !== "Playable") return Promise.resolve();
-                    return showPlayerActionButtons(player).then(awaitPlayerAction);
-                } else {
-                    return player.getState() === "Playable" ? player.twist() : Promise.resolve();
-                }
+                if (player.getState() !== "Playable") return Promise.resolve();
+                return player.isPlayerDriven() ? showPlayerActionButtons(player).then(awaitPlayerAction) : player.twist();
             })
         }, Promise.resolve())
             .then(resolve);
     });
 }
+
 function playerTwists(player, resolve) {
     return () => player.twist().then(resolve);
 }
+
 function playerSticks(player, resolve) {
     return () => player.stick().then(resolve);
 }
-function playerBurns(player, resolve){
+
+function playerBurns(player, resolve) {
     return () => player.burn().then(resolve);
 }
+
+function playerIsAFK(player,resolve) {
+    return () => {
+        player.checkCards(true);
+        if(player.getState() === "Playable") player.twist();
+        return resolve()
+    };
+}
+
 function playDealerRounds() {
     showPlayRoundButton(true);
     showPlayDealerRoundButton();
     checkDealerHand();
 }
 
-function setDeck(name) {
-    deckName = name;
-}
-function getDeckName() {
-    return deckName;
-}
 function showPlayerActionButtons(player) {
     document.getElementById(player.name + "Buttons").style.visibility = "visible";
     return Promise.resolve(player);
 }
+
 function showPlayRoundButton(hidden) {
     playRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
+
 function showPlayDealerRoundButton(hidden) {
     playDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
+
 function showStartDealerRoundButton(hidden) {
     startDealerRoundButton.style.visibility = hidden ? "hidden" : "visible";
 }
-function showResetButton() {
+
+function showEndScreenButtons() {
     UIButtons.map(button => button.style.visibility = "hidden");
-    resetGameButton.style.visibility = "visible";
+    endScreenDiv.style.visibility = "visible";
 }
+
 function showAllCards() {
     document.getElementById("TurnNumber").textContent = "Turn : " + turnNumber;
     allHands.concat(dealerHand).map(showCards);
 }
+
 function showCards(playerHand) {
-    document.getElementById(playerHand.name + "Name").textContent = playerHand.name;
-    playerHand.simpleHand().map((cardName,cardIndex) =>
-        document.getElementById(playerHand.name + "Card" + cardIndex).src = "poker_cards_chips_2d/Set_B/small/"+cardName+".png"
+    document.getElementById(playerHand.name + "Name").textContent = customNames[playerHand.name];
+    playerHand.simpleHand().map((cardName, cardIndex) =>
+        document.getElementById(playerHand.name + "Card" + cardIndex).src = "poker_cards_chips_2d/Set_B/small/" + cardName + ".png"
     );
     document.getElementById(playerHand.name + "Total").textContent = "total : " + playerHand.currentHandValue();
     document.getElementById(playerHand.name + "PlayState").textContent = playerHand.getState();
 }
-function shuffleDeck() {
-    deck = shuffle(deck);
-}
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-        [array[i], array[j]] = [array[j], array[i]]; // swap elements
-    }
-    return array;
-}
 
 function resetGame() {
-    allHands.concat(dealerHand).map(hand => hand.reset());
+    resetCards();
     startScreen.style.visibility = "visible";
     gameScreen.style.visibility = "hidden";
-    resetGameButton.style.visibility = "hidden";
+}
+
+function playAgain() {
+    resetCards();
+    startGame(previousNumberOfPlayers);
+}
+
+function resetCards() {
+    allHands.concat(dealerHand).map(hand => hand.reset());
     //resetWinStates
     ["", "", ""].map((p, i) => {
         document.getElementById("Player" + i + "WinState").textContent = p;
     });
     //reset card images
-    Array.from(document.getElementsByClassName("card")).map(card => card.src="");
+    Array.from(document.getElementsByClassName("card")).map(card => card.src = "");
+    endScreenDiv.style.visibility = "hidden";
 }
+
 
 init();
 

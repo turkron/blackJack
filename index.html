@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <title>BlackJack</title>
     <style>
+        body{
+            color: white;outline: black;
+        }
         .btn {
-            position: absolute;
+            position: fixed;
             top: 10%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -21,7 +24,7 @@
             text-align: center;
         }
         .hiddenBtn {
-            position: absolute;
+            position: fixed;
             top: 80%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -41,12 +44,16 @@
             margin-right: auto;
         }
         input.playerNames{
-            position: absolute;
+            position: fixed;
             top:25%
         }
         .card {
-            width: auto;
-            height: auto;
+            height: 70%;
+        }
+        .deck{
+            position: fixed;
+            top: 2%;
+            left:80%;
         }
     </style>
 </head>
@@ -54,39 +61,50 @@
 <script type="text/javascript" src="blackJack.js"></script>
 <div class="container">
     <div id="StartScreen">
-        <button onclick="startGame(0)" class="btn" id="StartButton">Start Game</button>
-        <button onclick="startGame(1)" class="btn" style="left: 20%; top: 20%" id="StartButton1P">1 Player</button>
-        <button onclick="startGame(2)" class="btn" style="left: 50%; top: 20%" id="StartButton2P">2 Player</button>
-        <button onclick="startGame(3)" class="btn" style="left: 80%; top: 20%" id="StartButton3P">3 Player</button>
+        <button onclick="startGame(0)" class="btn" id="StartButton">Auto Play Game</button>
+        <button onclick="startGame(1)" class="btn" style="left: 20%; top: 20%" id="StartButton1P">1 Player Game</button>
+        <button onclick="startGame(2)" class="btn" style="left: 50%; top: 20%" id="StartButton2P">2 Player Game</button>
+        <button onclick="startGame(3)" class="btn" style="left: 80%; top: 20%" id="StartButton3P">3 Player Game</button>
         <input type="text" id="Player0GivenName" placeholder="Player1 name" class="playerNames" style="left: 12%;">
         <input type="text" id="Player1GivenName" placeholder="Player2 name" class="playerNames" style="left: 42%;">
         <input type="text" id="Player2GivenName" placeholder="Player3 name" class="playerNames" style="left: 72%;">
-        <button onclick="setDeck('deck_1')" class="btn" style="left: 30%; top: 50%" id="Deck_1">
+        <button onclick="deck.name = 'deck_1'" class="btn" style="left: 30%; top: 50%" id="Deck_1">
             <img src="poker_cards_chips_2d/Set_B/small/deck_1.png" alt="">
         </button>
-        <button onclick="setDeck('deck_2')" class="btn" style="left: 50%; top: 50%" id="Deck_2">
+        <button onclick="deck.name = 'deck_2'" class="btn" style="left: 50%; top: 50%" id="Deck_2">
             <img src="poker_cards_chips_2d/Set_B/small/deck_2.png" alt="">
         </button>
-        <button onclick="setDeck('deck_3')" class="btn" style="left: 70%; top: 50%" id="Deck_3">
+        <button onclick="deck.name = 'deck_3'" class="btn" style="left: 70%; top: 50%" id="Deck_3">
             <img src="poker_cards_chips_2d/Set_B/small/deck_3.png" alt="">
         </button>
-        <button onclick="setDeck('deck_4')" class="btn" style="left: 30%; top: 75%" id="Deck_4">
+        <button onclick="deck.name = 'deck_4'" class="btn" style="left: 30%; top: 75%" id="Deck_4">
             <img src="poker_cards_chips_2d/Set_B/small/deck_4.png" alt="">
         </button>
-        <button onclick="setDeck('deck_5')" class="btn" style="left: 50%; top: 75%" id="Deck_5">
+        <button onclick="deck.name = 'deck_5'" class="btn" style="left: 50%; top: 75%" id="Deck_5">
             <img src="poker_cards_chips_2d/Set_B/small/deck_5.png" alt="">
         </button>
-        <button onclick="setDeck('deck_6')" class="btn" style="left: 70%; top: 75%" id="Deck_6">
+        <button onclick="deck.name = 'deck_6'" class="btn" style="left: 70%; top: 75%" id="Deck_6">
             <img src="poker_cards_chips_2d/Set_B/small/deck_6.png" alt="">
         </button>
     </div>
 
-    <div id="GameScreen">
+    <div id="GameScreen" style="visibility: hidden">
+        <div class="deck" id="DeckContainer">
+            <table>
+                <tr>
+                    <td>
+                        <img class="card" src="poker_cards_chips_2d/Set_B/small/deck_1.png" alt="" id="Deck">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center" id="CardCount">Count:52</td>
+                </tr>
+            </table>
+        </div>
         <button onclick="playGame()" class="hiddenBtn" id="PlayRoundButton">Play Next Round</button>
         <button onclick="playDealerRounds()" class="hiddenBtn" id="StartDealerRoundButton">Start Dealer rounds</button>
         <button onclick="playDealerRounds()" class="hiddenBtn" id="PlayDealerRoundButton">Play Next Round For Dealer
         </button>
-        <button onclick="resetGame()" class="hiddenBtn" id="ResetButton">Reset Game</button>
         <table class="center" id="DealerOutput">
             <tr>
                 <td id="DealerName"></td>
@@ -184,6 +202,10 @@
                 </td>
             </tr>
         </table>
+    </div>
+    <div id="EndGameScreen" style="visibility: hidden">
+        <button onclick="playAgain()" class="btn" id="PlayAgainButton" style="top:80%; left: 40%">Play Again</button>
+        <button onclick="resetGame()" class="btn" id="ResetButton" style="top:80%; left: 60%">Reset Game</button>
     </div>
 
 </div>
